@@ -1,0 +1,29 @@
+# Секреты
+.env
+.env.*
+!.env.example
+
+# Реальные банковские данные — НИКОГДА не коммитим
+data/private/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Базы данных (локальные)
+*.db
+*.sqlite3
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
