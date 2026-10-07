@@ -21,7 +21,18 @@
 
 ## Стек и команды
 
-_Заполняется на шаге 4._
+**Стек:**
+- Язык: Python 3.12+
+- Веб-фреймворк: FastAPI
+- Бот: aiogram 3.x
+- БД: PostgreSQL + SQLAlchemy
+- Линтер/Тестирование: flake8 / pytest
+
+**Команды:**
+- Установка зависимостей: `pip install -r requirements.txt`
+- Запуск тестов: `pytest`
+- Проверка кода: `flake8 src tests`
+- Запуск API: `uvicorn src.main:app --reload`
 
 ## Запреты
 
