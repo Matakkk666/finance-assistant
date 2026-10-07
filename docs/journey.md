@@ -41,7 +41,7 @@
 - [x] 2–3 варианта архитектуры, выбор
 - [x] `docs/architecture.md` (mermaid, модель данных, API)
 - [x] `docs/decisions/0001-stack.md`
-- [ ] Коммит
+- [x] Коммит
 
 ### Шаг 4. Скелет + AGENTS.md + CI
 - [ ] Ветка `chore/skeleton`, скелет + 1 тест
