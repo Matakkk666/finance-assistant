@@ -35,12 +35,12 @@
 - [x] Интервью с агентом
 - [x] `docs/tz.md` (с разделом «Что НЕ входит в MVP»)
 - [x] `docs/roadmap.md`
-- [ ] Коммит
+- [x] Коммит
 
 ### Шаг 3. System design
-- [ ] 2–3 варианта архитектуры, выбор
-- [ ] `docs/architecture.md` (mermaid, модель данных, API)
-- [ ] `docs/decisions/0001-stack.md`
+- [x] 2–3 варианта архитектуры, выбор
+- [x] `docs/architecture.md` (mermaid, модель данных, API)
+- [x] `docs/decisions/0001-stack.md`
 - [ ] Коммит
 
 ### Шаг 4. Скелет + AGENTS.md + CI
