@@ -1,6 +1,7 @@
 import json
-from google import genai
+
 from dotenv import load_dotenv
+from google import genai
 
 from src.models.transaction import Transaction
 

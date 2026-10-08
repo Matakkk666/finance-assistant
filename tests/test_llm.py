@@ -1,9 +1,8 @@
-from unittest.mock import patch
-from src.services.llm import categorize_transactions
 import datetime
+from unittest.mock import patch
 
 from src.models.transaction import Transaction
-from src.services.llm import build_prompt
+from src.services.llm import build_prompt, categorize_transactions
 
 
 def test_build_prompt():
