@@ -23,7 +23,9 @@ async def cmd_start(message: Message):
         await message.answer("Извините, это приватный бот.")
         return
 
-    await message.answer("Привет! Отправь мне CSV файл с выпиской, и я его проанализирую.")
+    await message.answer(
+        "Привет! Отправь мне CSV файл с выпиской, и я его проанализирую."
+    )
 
 
 @router.message(F.document)
@@ -32,8 +34,8 @@ async def handle_document(message: Message, bot: Bot):
     if owner_id and message.from_user.id != owner_id:
         return
 
-    if not message.document.file_name.endswith('.csv'):
-        await message.answer("Пожалуйста, отправьте CSV файл.")
+    if not message.document.file_name.endswith(('.csv', '.xlsx', '.xls')):
+        await message.answer("Пожалуйста, отправьте CSV или Excel файл.")
         return
 
     status_msg = await message.answer("⏳ Файл получен. Начинаю анализ...")
@@ -52,7 +54,9 @@ async def handle_document(message: Message, bot: Bot):
         transactions = parse_csv(local_path)
 
         # 3. Категоризация ИИ
-        await status_msg.edit_text("🧠 Отправляю данные в нейросеть (Gemini)...")
+        await status_msg.edit_text(
+            "🧠 Отправляю данные в нейросеть (Gemini)..."
+        )
         transactions = categorize_transactions(transactions)
 
         # 4. Аналитика
@@ -61,7 +65,9 @@ async def handle_document(message: Message, bot: Bot):
 
         # 5. Формирование ответа
         if not report_data:
-            await status_msg.edit_text("Транзакций не найдено или произошла ошибка.")
+            await status_msg.edit_text(
+                "Транзакций не найдено или произошла ошибка."
+            )
             return
 
         report_text = "📊 <b>Отчет по категориям:</b>\n\n"

@@ -1,26 +1,33 @@
 from pathlib import Path
-
+from datetime import date
 from src.services.parser import parse_csv
 
 
-def test_parse_csv():
-    # Находим путь к нашему фейковому файлу
-    file_path = Path(__file__).parent / "fixtures" / "sample.csv"
-
-    # Пытаемся его распарсить
+def test_parse_csv_semicolon():
+    file_path = Path(__file__).parent / "fixtures" / "tinkoff_test1.csv"
     transactions = parse_csv(file_path)
 
-    # Проверяем, что вернулось 3 транзакции
-    assert len(transactions) == 3
+    assert len(transactions) == 2
 
-    # Проверяем первую транзакцию
-    assert transactions[0].description == "Супермаркет"
-    assert transactions[0].amount == -1500.50
+    assert transactions[0].description == "Магнит"
+    assert transactions[0].amount == -109.99
+    assert transactions[0].date == date(2026, 10, 7)
 
-    # Проверяем вторую транзакцию
-    assert transactions[1].description == "Зарплата"
-    assert transactions[1].amount == 50000.00
+    assert transactions[1].description == "Анна К."
+    assert transactions[1].amount == 1500.00
+    assert transactions[1].date == date(2026, 10, 4)
 
-    # Проверяем третью транзакцию (с запятой в сумме)
-    assert transactions[2].description == "Кофе"
-    assert transactions[2].amount == -150.50
+
+def test_parse_csv_comma():
+    file_path = Path(__file__).parent / "fixtures" / "tinkoff_test2.csv"
+    transactions = parse_csv(file_path)
+
+    assert len(transactions) == 2
+
+    assert transactions[0].description == "Магнит"
+    assert transactions[0].amount == -109.99
+    assert transactions[0].date == date(2026, 10, 7)
+
+    assert transactions[1].description == "Анна К."
+    assert transactions[1].amount == 1500.00
+    assert transactions[1].date == date(2026, 10, 4)

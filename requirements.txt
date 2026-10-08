@@ -8,3 +8,5 @@ httpx2
 python-dotenv
 google-genai
 aiogram
+pandas
+openpyxl
