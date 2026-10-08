@@ -50,8 +50,8 @@
 - [x] Первый PR → CI зелёный → merge
 
 ### Шаг 5. Первая фича полным циклом ⭐
-- [ ] spec.md → plan.md → tasks.md
-- [ ] Все задачи по TDD
+- [x] spec.md → plan.md → tasks.md
+- [x] Все задачи по TDD
 - [ ] PR → merge
 - [ ] Ретро
 
