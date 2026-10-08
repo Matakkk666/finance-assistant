@@ -16,7 +16,7 @@ description: >-
    
    *Команда, которую нужно выполнить (в одну строку):*
    ```powershell
-   ssh -i $env:USERPROFILE\.ssh\minter_vps_ed25519 -o IdentitiesOnly=yes root@194.58.41.95 "cd /root/finance-assistant && git pull origin master && source venv/bin/activate && pip install -r requirements.txt && pkill -f 'python -m src.bot.main' ; nohup python -m src.bot.main > bot.log 2>&1 &"
+   ssh -i $env:USERPROFILE\.ssh\minter_vps_ed25519 -o IdentitiesOnly=yes root@194.58.41.95 "cd /root/finance-assistant && git pull origin master && source venv/bin/activate && pip install -r requirements.txt && pkill -f 'python -m src.bot.main' ; sleep 3 ; nohup python -m src.bot.main > bot.log 2>&1 </dev/null &"
    ```
-4. Эта команда выполнится прозрачно, и сервер сам скачает новый код и перезапустит бота.
+4. Эта команда убьет старого бота, подождет 3 секунды (чтобы Телеграм успел разорвать старое соединение) и безопасно запустит нового, избегая `TelegramConflictError`.
 5. Проверь успешность выполнения команды и сообщи пользователю, что бот обновлен!
