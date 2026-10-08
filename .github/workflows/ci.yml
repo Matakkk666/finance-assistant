@@ -29,5 +29,6 @@ jobs:
     - name: Test with pytest
       env:
         PYTHONPATH: .
+        GEMINI_API_KEY: "fake_key_for_tests"
       run: |
         pytest

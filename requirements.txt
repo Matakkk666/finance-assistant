@@ -5,3 +5,5 @@ sqlalchemy
 pytest
 flake8
 httpx2
+python-dotenv
+google-genai
