@@ -1,3 +1,4 @@
+from src.services.chat import process_user_question
 import os
 
 from aiogram import Bot, F, Router
@@ -89,3 +90,24 @@ async def handle_document(message: Message, bot: Bot):
     finally:
         if os.path.exists(local_path):
             os.remove(local_path)
+
+
+@router.message(F.text)
+async def handle_text_message(message: Message):
+    owner_id = get_owner_id()
+    if owner_id and message.from_user.id != owner_id:
+        return
+
+    status_msg = await message.answer("🧠 Думаю...")
+
+    from src.db.database import async_session
+    try:
+        async with async_session() as session:
+            answer = await process_user_question(
+                message.text,
+                message.from_user.id,
+                session
+            )
+            await status_msg.edit_text(answer)
+    except Exception as e:
+        await status_msg.edit_text(f"❌ Ошибка:\n{e}")
