@@ -1,4 +1,9 @@
-from src.services.chat import process_user_question
+from aiogram.types import (
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+    WebAppInfo
+)
+from src.services.chat import process_user_question  # noqa
 import os
 
 from aiogram import Bot, F, Router
@@ -90,6 +95,25 @@ async def handle_document(message: Message, bot: Bot):
     finally:
         if os.path.exists(local_path):
             os.remove(local_path)
+
+
+@router.message(Command("app"))
+async def cmd_app(message: Message):
+    owner_id = get_owner_id()
+    if owner_id and message.from_user.id != owner_id:
+        return
+
+    webapp_url = os.getenv("WEBAPP_URL", "https://hot-parrots-tie.loca.lt/")
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Открыть Дашборд",
+                                  web_app=WebAppInfo(url=webapp_url))]
+        ]
+    )
+    await message.answer(
+        "Нажмите кнопку ниже, чтобы открыть дашборд:",
+        reply_markup=keyboard
+    )
 
 
 @router.message(F.text)
