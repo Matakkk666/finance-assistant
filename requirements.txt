@@ -7,6 +7,9 @@ flake8
 httpx2
 python-dotenv
 google-genai
-aiogram
 pandas
 openpyxl
+asyncpg
+alembic
+greenlet
+pytest-asyncio
