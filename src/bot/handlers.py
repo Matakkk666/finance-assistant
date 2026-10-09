@@ -59,6 +59,14 @@ async def handle_document(message: Message, bot: Bot):
         )
         transactions = categorize_transactions(transactions)
 
+        from src.db.database import async_session
+        from src.db.repository import save_transactions
+        await status_msg.edit_text("💾 Сохраняю транзакции в базу данных...")
+        async with async_session() as session:
+            await save_transactions(
+                session, transactions, message.from_user.id
+            )
+
         # 4. Аналитика
         await status_msg.edit_text("📊 Подвожу итоги...")
         report_data = aggregate_by_category(transactions)
