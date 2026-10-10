@@ -8,19 +8,16 @@ from src.services.llm import build_prompt, categorize_transactions
 def test_build_prompt():
     txs = [
         Transaction(
-            date=datetime.date(
-                2026,
-                10,
-                1),
+            date=datetime.date(2026, 10, 1),
             description="Супермаркет",
-            amount=-1500.50),
+            amount=-1500.50,
+        ),
         Transaction(
-            date=datetime.date(
-                2026,
-                10,
-                2),
+            date=datetime.date(2026, 10, 2),
             description="Зарплата",
-            amount=50000.00)]
+            amount=50000.00,
+        ),
+    ]
 
     prompt = build_prompt(txs)
 
@@ -33,7 +30,7 @@ def test_build_prompt():
     assert "Верни JSON" in prompt
 
 
-@patch('src.services.llm.client.models.generate_content')
+@patch("src.services.llm.client.models.generate_content")
 def test_categorize_transactions(mock_generate):
     # 1. Настраиваем фейковый ответ от нейросети
     class MockResponse:
@@ -44,19 +41,16 @@ def test_categorize_transactions(mock_generate):
     # 2. Подготавливаем тестовые данные
     txs = [
         Transaction(
-            date=datetime.date(
-                2026,
-                10,
-                1),
+            date=datetime.date(2026, 10, 1),
             description="Супермаркет",
-            amount=-1500.50),
+            amount=-1500.50,
+        ),
         Transaction(
-            date=datetime.date(
-                2026,
-                10,
-                2),
+            date=datetime.date(2026, 10, 2),
             description="Зарплата",
-            amount=50000.00)]
+            amount=50000.00,
+        ),
+    ]
 
     # 3. Вызываем функцию (она не пойдет в интернет, а обратится к нашему
     # mock_generate)

@@ -17,12 +17,17 @@ def validate_sql(sql: str) -> bool:
     Проверяет SQL-запрос на наличие запрещенных команд.
     """
     forbidden_words = [
-        "DROP", "DELETE", "UPDATE", "INSERT", "ALTER", "TRUNCATE"
+        "DROP",
+        "DELETE",
+        "UPDATE",
+        "INSERT",
+        "ALTER",
+        "TRUNCATE",
     ]
     sql_upper = sql.upper()
     for word in forbidden_words:
         # Используем регулярное выражение для поиска слова целиком
-        if re.search(rf'\b{word}\b', sql_upper):
+        if re.search(rf"\b{word}\b", sql_upper):
             return False
     return True
 
@@ -58,18 +63,16 @@ def generate_sql(question: str, owner_id: int) -> str:
     )
 
     response = client.models.generate_content(
-        model='gemini-3.8-flash',
-        contents=prompt
+        model="gemini-3.8-flash", contents=prompt
     )
 
-    sql = response.text.replace('```sql', '').replace('```', '').strip()
+    sql = response.text.replace("```sql", "").replace("```", "").strip()
     return sql
 
 
 async def process_user_question(
-        question: str,
-        owner_id: int,
-        db_session) -> str:
+    question: str, owner_id: int, db_session
+) -> str:
     """
     Основная логика Text-to-SQL.
     """
@@ -97,8 +100,7 @@ async def process_user_question(
         )
 
         response = client.models.generate_content(
-            model='gemini-3.8-flash',
-            contents=prompt
+            model="gemini-3.8-flash", contents=prompt
         )
 
         final_answer = response.text.strip()

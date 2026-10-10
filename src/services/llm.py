@@ -6,9 +6,16 @@ from google import genai
 from src.models.transaction import Transaction
 
 CATEGORIES = [
-    "Самокаты", "Крипта", "Виза заграничная",
-    "Хавка", "Фастфуд", "Рестораны",
-    "Озон", "Веб3", "Переводы", "Прочее"
+    "Самокаты",
+    "Крипта",
+    "Виза заграничная",
+    "Хавка",
+    "Фастфуд",
+    "Рестораны",
+    "Озон",
+    "Веб3",
+    "Переводы",
+    "Прочее",
 ]
 
 
@@ -20,7 +27,7 @@ def build_prompt(transactions: list[Transaction]) -> str:
         "Твоя задача — категоризировать список транзакций.\n\n"
     )
     prompt += "Категории: " + ", ".join(CATEGORIES) + "\n\n"
-    prompt += "Верни JSON в формате: {\"<ID>\": \"<Категория>\"}.\n\n"
+    prompt += 'Верни JSON в формате: {"<ID>": "<Категория>"}.\n\n'
     prompt += "Транзакции:\n"
 
     for i, tx in enumerate(transactions):
@@ -37,7 +44,8 @@ client = genai.Client()
 
 
 def categorize_transactions(
-        transactions: list[Transaction]) -> list[Transaction]:
+    transactions: list[Transaction],
+) -> list[Transaction]:
     """Отправляет транзакции в Gemini и проставляет им категории."""
     if not transactions:
         return []
@@ -46,17 +54,16 @@ def categorize_transactions(
 
     # Отправляем запрос к Gemini
     response = client.models.generate_content(
-        model='gemini-3.8-flash',
-        contents=prompt
+        model="gemini-3.8-flash", contents=prompt
     )
 
     # Парсим JSON-ответ от нейросети
     try:
         # Иногда нейросеть оборачивает JSON в маркдаун блоки ```json ... ```,
         # счищаем это
-        clean_text = response.text.replace(
-            '```json', '').replace(
-            '```', '').strip()
+        clean_text = (
+            response.text.replace("```json", "").replace("```", "").strip()
+        )
         result_map = json.loads(clean_text)
 
         # Проставляем категории обратно в объекты
