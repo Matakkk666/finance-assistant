@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import axios from 'axios'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
-import { Home, Receipt, Search, X, ShoppingCart, Coffee, Car, CreditCard, Pizza, XCircle, TrendingDown, TrendingUp, Bot, Send } from 'lucide-react'
+import { Home, Receipt, Search, X, ShoppingCart, Coffee, Car, CreditCard, Pizza, XCircle, TrendingDown, TrendingUp, Bot, Send, Landmark } from 'lucide-react'
 import './App.css'
 
 interface Stats {
@@ -22,13 +22,23 @@ interface Transaction {
   description?: string;
 }
 
+interface Bank {
+  id: string;
+  name: string;
+  description: string;
+  is_connected: boolean;
+  last_synced_at: string | null;
+}
+
 const COLORS = ['#D8B4E2', '#AEE5D8', '#FFD1BA', '#B5D8F7', '#F2C6C2', '#FDFD96'];
 
 export default function App() {
   const [stats, setStats] = useState<Stats>({ total_spent: 0, categories: [] });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [banks, setBanks] = useState<Bank[]>([]);
+  const [syncingBank, setSyncingBank] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'home' | 'operations' | 'chat'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'operations' | 'chat' | 'banks'>('home');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -60,13 +70,15 @@ export default function App() {
         setLoading(true);
         const baseUrl = '/api';
         
-        const [statsRes, txRes] = await Promise.all([
+        const [statsRes, txRes, banksRes] = await Promise.all([
           axios.get(`${baseUrl}/stats`, { params: { user_id: userId } }).catch(() => ({ data: { total_spent: 0, categories: [] } })),
-          axios.get(`${baseUrl}/transactions`, { params: { user_id: userId } }).catch(() => ({ data: [] }))
+          axios.get(`${baseUrl}/transactions`, { params: { user_id: userId } }).catch(() => ({ data: [] })),
+          axios.get(`${baseUrl}/banks`, { params: { user_id: userId } }).catch(() => ({ data: [] }))
         ]);
 
         setStats(statsRes.data);
         setTransactions(txRes.data);
+        setBanks(banksRes.data);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -75,7 +87,79 @@ export default function App() {
     };
 
     fetchData();
+    
+    // Add event listener for callback from auth window
+    const handleMessage = (e: MessageEvent) => {
+       if (e.data === 'auth_success') {
+          fetchData();
+       }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
   }, [userId]);
+
+  const handleConnectBank = async (bankId: string) => {
+    try {
+      haptic();
+      const res = await axios.post('/api/banks/connect', { user_id: userId, bank_name: bankId });
+      const width = 400;
+      const height = 600;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+      
+      const authWindow = window.open(
+        res.data.auth_url, 
+        'BankAuth', 
+        `width=${width},height=${height},left=${left},top=${top}`
+      );
+      
+      // Since window.close in auth doesn't easily postMessage back without same origin,
+      // We will just poll the db or assume we can reload after a timeout or let user click refresh
+      // We added window.close() to callback, so let's poll if window closed
+      const timer = setInterval(async () => {
+        if (authWindow?.closed) {
+          clearInterval(timer);
+          const banksRes = await axios.get('/api/banks', { params: { user_id: userId } });
+          setBanks(banksRes.data);
+        }
+      }, 1000);
+      
+    } catch(e) {
+      console.error(e);
+    }
+  };
+
+  const handleSyncBank = async (bankId: string) => {
+    try {
+      haptic();
+      setSyncingBank(bankId);
+      await axios.post('/api/banks/sync', { user_id: userId, bank_name: bankId });
+      
+      const [statsRes, txRes, banksRes] = await Promise.all([
+        axios.get(`/api/stats`, { params: { user_id: userId } }),
+        axios.get(`/api/transactions`, { params: { user_id: userId } }),
+        axios.get(`/api/banks`, { params: { user_id: userId } })
+      ]);
+      setStats(statsRes.data);
+      setTransactions(txRes.data);
+      setBanks(banksRes.data);
+    } catch(e) {
+      console.error(e);
+    } finally {
+      setSyncingBank(null);
+    }
+  };
+
+  const handleDisconnectBank = async (bankId: string) => {
+    try {
+      haptic();
+      await axios.post('/api/banks/disconnect', { user_id: userId, bank_name: bankId });
+      const banksRes = await axios.get('/api/banks', { params: { user_id: userId } });
+      setBanks(banksRes.data);
+    } catch(e) {
+      console.error(e);
+    }
+  };
 
   
   const handleSendMessage = async () => {
@@ -347,6 +431,80 @@ export default function App() {
         </div>
       )}
 
+      {activeTab === 'banks' && (
+        <div className="flex flex-col h-screen animate-fade-in pb-24">
+          <header className="py-4 px-5 bg-tg-bg/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-10">
+            <h1 className="text-2xl font-bold">Мои Банки</h1>
+            <p className="text-sm text-tg-hint mt-1">Подключение счетов в один клик без ввода реквизитов</p>
+          </header>
+          
+          <div className="flex-1 overflow-y-auto p-5 space-y-4">
+            {banks.map(bank => (
+              <div key={bank.id} className="bg-tg-secondaryBg/80 backdrop-blur-md rounded-3xl p-5 border border-white/5 shadow-lg relative overflow-hidden flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
+                      <Landmark className="w-6 h-6 text-blue-500" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg">{bank.name}</h3>
+                      <p className="text-xs text-tg-hint">{bank.description}</p>
+                    </div>
+                  </div>
+                  {bank.is_connected ? (
+                     <span className="px-3 py-1 bg-green-500/20 text-green-500 text-xs font-bold rounded-full border border-green-500/20">
+                       Активен ✅
+                     </span>
+                  ) : (
+                     <span className="px-3 py-1 bg-gray-500/20 text-gray-400 text-xs font-bold rounded-full border border-gray-500/20">
+                       Не подключен
+                     </span>
+                  )}
+                </div>
+                
+                {bank.is_connected && bank.last_synced_at && (
+                  <p className="text-xs text-tg-hint">
+                    Последняя синхронизация: {new Date(bank.last_synced_at).toLocaleString('ru-RU')}
+                  </p>
+                )}
+                
+                <div className="flex gap-2 mt-2">
+                  {!bank.is_connected ? (
+                    <button
+                      onClick={() => handleConnectBank(bank.id)}
+                      className="flex-1 bg-blue-500 text-white py-3 rounded-xl font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-transform"
+                    >
+                      Подключить через банк
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => handleSyncBank(bank.id)}
+                        disabled={syncingBank === bank.id}
+                        className="flex-1 bg-blue-500 text-white py-3 rounded-xl font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-transform flex justify-center items-center gap-2 disabled:opacity-50"
+                      >
+                        {syncingBank === bank.id ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Синхронизация...
+                          </>
+                        ) : 'Синхронизировать'}
+                      </button>
+                      <button
+                        onClick={() => handleDisconnectBank(bank.id)}
+                        className="px-4 bg-red-500/10 text-red-500 py-3 rounded-xl font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-transform"
+                      >
+                        Отключить
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* BOTTOM NAVIGATION BAR */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-tg-bg/80 backdrop-blur-2xl border-t border-gray-500/10 px-6 py-2 flex justify-between items-center z-40 pb-safe">
         <button 
@@ -378,6 +536,17 @@ export default function App() {
         >
           <Receipt className="w-6 h-6" />
           <span className="text-[10px] font-bold">Операции</span>
+        </button>
+
+        <button 
+          onClick={() => {
+            haptic();
+            setActiveTab('banks');
+          }}
+          className={`flex flex-col items-center gap-1 p-2 flex-1 rounded-2xl transition-all duration-300 ${activeTab === 'banks' ? 'text-blue-500 scale-110' : 'text-tg-hint hover:text-tg-text'}`}
+        >
+          <Landmark className="w-6 h-6" />
+          <span className="text-[10px] font-bold">Банки</span>
         </button>
       </div>
 
