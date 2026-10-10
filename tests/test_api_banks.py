@@ -164,3 +164,22 @@ async def test_disconnect_bank():
         result = await session.execute(query)
         record = result.scalar_one_or_none()
         assert record.status == "disconnected"
+
+
+@pytest.mark.asyncio
+async def test_approve_bank():
+    transport = ASGITransport(app=app)
+    payload = {"user_id": 999, "bank_name": "tbank"}
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        response = await ac.post("/api/banks/approve", json=payload)
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
+
+    async with TestingSessionLocal() as session:
+        query = select(BankConnectionDB).where(BankConnectionDB.user_id == 999)
+        result = await session.execute(query)
+        record = result.scalar_one_or_none()
+        assert record is not None
+        assert record.status == "connected"
+        assert record.bank_name == "tbank"

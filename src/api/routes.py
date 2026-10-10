@@ -9,6 +9,7 @@ from src.db.database import get_db
 from src.models.db import TransactionDB, BankConnectionDB
 from src.services.chat import process_user_question
 from src.services.bank.sync import sync_user_bank
+from src.services.bank.factory import get_bank_provider
 
 router = APIRouter(prefix="/api")
 
@@ -185,6 +186,30 @@ async def auth_callback(
     return "Error"
 
 
+@router.post("/banks/approve")
+async def approve_bank_connection(
+        request: BankConnectRequest,
+        db: AsyncSession = Depends(get_db)):
+    query = select(BankConnectionDB).where(
+        BankConnectionDB.user_id == request.user_id,
+        BankConnectionDB.bank_name == request.bank_name
+    )
+    result = await db.execute(query)
+    conn = result.scalar_one_or_none()
+
+    if conn:
+        conn.status = "connected"
+    else:
+        conn = BankConnectionDB(
+            user_id=request.user_id,
+            bank_name=request.bank_name,
+            status="connected")
+        db.add(conn)
+    await db.commit()
+
+    return {"status": "ok", "message": f"{request.bank_name} connected"}
+
+
 @router.post("/banks/sync")
 async def sync_bank(
         request: BankConnectRequest,
@@ -199,12 +224,13 @@ async def sync_bank(
     if not conn or conn.status != "connected":
         return {"status": "error", "message": "Bank not connected"}
 
-    await sync_user_bank(request.user_id, db)
+    provider = get_bank_provider(request.bank_name)
+    report = await sync_user_bank(request.user_id, db, provider=provider)
 
     conn.last_synced_at = datetime.utcnow()
     await db.commit()
 
-    return {"status": "ok"}
+    return {"status": "ok", "report": report}
 
 
 @router.post("/banks/disconnect")
