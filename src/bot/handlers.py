@@ -135,8 +135,10 @@ async def cmd_sync(message: Message):
     try:
         provider = get_bank_provider(bank_name)
     except ValueError:
+        from src.services.bank.factory import providers
+        available = ", ".join(providers.keys())
         await status_msg.edit_text(
-            f"Неизвестный банк: {bank_name}. Доступны: sber, tbank, mkb, mock."
+            f"Неизвестный банк: {bank_name}. Доступны: {available}."
         )
         return
 
