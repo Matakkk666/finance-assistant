@@ -19,6 +19,7 @@ async def override_get_db():
     async with TestingSessionLocal() as session:
         yield session
 
+
 app.dependency_overrides[get_db] = override_get_db
 
 
@@ -35,25 +36,45 @@ async def prepare_database():
 async def populate_db():
     async with TestingSessionLocal() as session:
         txs = [
-            Transaction(date=datetime.now().date(), amount=-100.0,
-                        description="Test Food", category="Food"),
-            Transaction(date=datetime.now().date(), amount=-200.0,
-                        description="Test Transport", category="Transport"),
-            Transaction(date=datetime.now().date(), amount=-150.0,
-                        description="Test Food 2", category="Food"),
-            Transaction(date=datetime.now().date(), amount=5000.0,
-                        description="Salary", category="Income"),
+            Transaction(
+                date=datetime.now().date(),
+                amount=-100.0,
+                description="Test Food",
+                category="Food",
+            ),
+            Transaction(
+                date=datetime.now().date(),
+                amount=-200.0,
+                description="Test Transport",
+                category="Transport",
+            ),
+            Transaction(
+                date=datetime.now().date(),
+                amount=-150.0,
+                description="Test Food 2",
+                category="Food",
+            ),
+            Transaction(
+                date=datetime.now().date(),
+                amount=5000.0,
+                description="Salary",
+                category="Income",
+            ),
         ]
         await save_transactions(session, txs, 123)
         # Another user
-        await save_transactions(session, [
-            Transaction(
-                date=datetime.now().date(),
-                amount=-500.0,
-                description="Other",
-                category="Other"
-            )
-        ], 999)
+        await save_transactions(
+            session,
+            [
+                Transaction(
+                    date=datetime.now().date(),
+                    amount=-500.0,
+                    description="Other",
+                    category="Other",
+                )
+            ],
+            999,
+        )
 
 
 @pytest.mark.asyncio
@@ -69,7 +90,7 @@ async def test_api_stats(populate_db):
     categories = data["categories"]
     assert len(categories) == 2
 
-    # SQLite returns rows in potentially arbitrary order, so we convert to a dict
+    # SQLite returns rows in arbitrary order, so convert to dict
     cat_dict = {c["name"]: c["value"] for c in categories}
     assert cat_dict["Food"] == -250.0
     assert cat_dict["Transport"] == -200.0

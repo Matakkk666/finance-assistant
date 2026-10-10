@@ -27,18 +27,21 @@ async def test_save_transactions(db_session):
             date=datetime.now().date(),
             amount=100.0,
             description="Test 1",
-            category="Food"),
+            category="Food",
+        ),
         Transaction(
             date=datetime.now().date(),
             amount=200.0,
             description="Test 2",
-            category="Transport"),
+            category="Transport",
+        ),
     ]
     owner_id = 12345
 
     await save_transactions(db_session, txs, owner_id)
 
     from sqlalchemy import select
+
     result = await db_session.execute(
         select(TransactionDB).where(TransactionDB.owner_id == owner_id)
     )

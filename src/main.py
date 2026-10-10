@@ -26,8 +26,5 @@ def health_check():
 frontend_dist = os.path.join(os.getcwd(), "frontend", "dist")
 if os.path.exists(frontend_dist):
     app.mount(
-        "/",
-        StaticFiles(
-            directory=frontend_dist,
-            html=True),
-        name="static")
+        "/", StaticFiles(directory=frontend_dist, html=True), name="static"
+    )

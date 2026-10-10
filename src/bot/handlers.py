@@ -1,7 +1,9 @@
+from src.services.bank.factory import get_bank_provider
+from src.services.bank.sync import sync_user_bank
 from aiogram.types import (
     InlineKeyboardMarkup,
     InlineKeyboardButton,
-    WebAppInfo
+    WebAppInfo,
 )
 from src.services.chat import process_user_question  # noqa
 import os
@@ -40,7 +42,7 @@ async def handle_document(message: Message, bot: Bot):
     if owner_id and message.from_user.id != owner_id:
         return
 
-    if not message.document.file_name.endswith(('.csv', '.xlsx', '.xls')):
+    if not message.document.file_name.endswith((".csv", ".xlsx", ".xls")):
         await message.answer("Пожалуйста, отправьте CSV или Excel файл.")
         return
 
@@ -67,6 +69,7 @@ async def handle_document(message: Message, bot: Bot):
 
         from src.db.database import async_session
         from src.db.repository import save_transactions
+
         await status_msg.edit_text("💾 Сохраняю транзакции в базу данных...")
         async with async_session() as session:
             await save_transactions(
@@ -106,14 +109,60 @@ async def cmd_app(message: Message):
     webapp_url = os.getenv("WEBAPP_URL", "https://hot-parrots-tie.loca.lt/")
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="Открыть Дашборд",
-                                  web_app=WebAppInfo(url=webapp_url))]
+            [
+                InlineKeyboardButton(
+                    text="Открыть Дашборд", web_app=WebAppInfo(url=webapp_url)
+                )
+            ]
         ]
     )
     await message.answer(
-        "Нажмите кнопку ниже, чтобы открыть дашборд:",
-        reply_markup=keyboard
+        "Нажмите кнопку ниже, чтобы открыть дашборд:", reply_markup=keyboard
     )
+
+
+@router.message(Command("sync"))
+async def cmd_sync(message: Message):
+    owner_id = get_owner_id()
+    if owner_id and message.from_user.id != owner_id:
+        return
+
+    status_msg = await message.answer("Синхронизация с банком...")
+
+    parts = message.text.split(maxsplit=1)
+    bank_name = parts[1] if len(parts) > 1 else "mock"
+
+    try:
+        provider = get_bank_provider(bank_name)
+    except ValueError:
+        from src.services.bank.factory import providers
+        available = ", ".join(providers.keys())
+        await status_msg.edit_text(
+            f"Неизвестный банк: {bank_name}. Доступны: {available}."
+        )
+        return
+
+    try:
+        from src.db.database import async_session
+
+        async with async_session() as session:
+            report = await sync_user_bank(
+                message.from_user.id, session, provider
+            )
+
+        report_text = (
+            f"Синхронизация успешна\n\n"
+            f"Получено: {report['fetched']}\n"
+            f"Новых: {report['new']}\n\n"
+        )
+        if report["categories"]:
+            report_text += "Категории новых транзакций:\n"
+            for cat, count in report["categories"].items():
+                report_text += f"• {cat}: {count}\n"
+
+        await status_msg.edit_text(report_text, parse_mode="HTML")
+    except Exception as e:
+        await status_msg.edit_text(f"Ошибка синхронизации:\n{e}")
 
 
 @router.message(F.text)
@@ -125,12 +174,11 @@ async def handle_text_message(message: Message):
     status_msg = await message.answer("🧠 Думаю...")
 
     from src.db.database import async_session
+
     try:
         async with async_session() as session:
             answer = await process_user_question(
-                message.text,
-                message.from_user.id,
-                session
+                message.text, message.from_user.id, session
             )
             await status_msg.edit_text(answer)
     except Exception as e:

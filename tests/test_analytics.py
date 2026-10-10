@@ -7,37 +7,29 @@ from src.services.analytics import aggregate_by_category
 def test_aggregate_by_category():
     txs = [
         Transaction(
-            date=datetime.date(
-                2026,
-                1,
-                1),
+            date=datetime.date(2026, 1, 1),
             description="Такси",
             amount=-500,
-            category="Транспорт"),
+            category="Транспорт",
+        ),
         Transaction(
-            date=datetime.date(
-                2026,
-                1,
-                2),
+            date=datetime.date(2026, 1, 2),
             description="Автобус",
             amount=-50,
-            category="Транспорт"),
+            category="Транспорт",
+        ),
         Transaction(
-            date=datetime.date(
-                2026,
-                1,
-                3),
+            date=datetime.date(2026, 1, 3),
             description="Бургер",
             amount=-600,
-            category="Фастфуд"),
+            category="Фастфуд",
+        ),
         Transaction(
-            date=datetime.date(
-                2026,
-                1,
-                4),
+            date=datetime.date(2026, 1, 4),
             description="Зарплата",
             amount=100000,
-            category="Зарплата"),
+            category="Зарплата",
+        ),
     ]
 
     result = aggregate_by_category(txs)
