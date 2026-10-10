@@ -1,10 +1,21 @@
+from contextlib import asynccontextmanager
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from src.api.routes import router as api_router
+from src.db.database import engine, Base
+import src.models.db  # noqa: F401
 
-app = FastAPI(title="Finance Assistant API")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+
+
+app = FastAPI(title="Finance Assistant API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
