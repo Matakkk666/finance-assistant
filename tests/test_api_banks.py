@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
@@ -109,7 +110,13 @@ async def test_callback():
 
 
 @pytest.mark.asyncio
-async def test_sync_bank():
+@patch("src.api.routes.sync_user_bank")
+async def test_sync_bank(mock_sync):
+    mock_sync.return_value = {
+        "fetched": 2,
+        "new": 1,
+        "categories": {"Food": 1},
+    }
     async with TestingSessionLocal() as session:
         bank = BankConnectionDB(
             user_id=123,
@@ -126,6 +133,7 @@ async def test_sync_bank():
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "ok"
+    mock_sync.assert_called_once()
 
     async with TestingSessionLocal() as session:
         query = select(BankConnectionDB).where(BankConnectionDB.user_id == 123)
