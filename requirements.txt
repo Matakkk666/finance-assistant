@@ -13,3 +13,4 @@ asyncpg
 alembic
 greenlet
 pytest-asyncio
+aiosqlite
