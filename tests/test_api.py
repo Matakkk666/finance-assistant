@@ -35,19 +35,21 @@ async def prepare_database():
 async def populate_db():
     async with TestingSessionLocal() as session:
         txs = [
-            Transaction(date=datetime.now().date(), amount=100.0,
+            Transaction(date=datetime.now().date(), amount=-100.0,
                         description="Test Food", category="Food"),
-            Transaction(date=datetime.now().date(), amount=200.0,
+            Transaction(date=datetime.now().date(), amount=-200.0,
                         description="Test Transport", category="Transport"),
-            Transaction(date=datetime.now().date(), amount=150.0,
+            Transaction(date=datetime.now().date(), amount=-150.0,
                         description="Test Food 2", category="Food"),
+            Transaction(date=datetime.now().date(), amount=5000.0,
+                        description="Salary", category="Income"),
         ]
         await save_transactions(session, txs, 123)
         # Another user
         await save_transactions(session, [
             Transaction(
                 date=datetime.now().date(),
-                amount=500.0,
+                amount=-500.0,
                 description="Other",
                 category="Other"
             )
@@ -62,16 +64,15 @@ async def test_api_stats(populate_db):
 
     assert response.status_code == 200
     data = response.json()
-    assert data["total_spent"] == 450.0
+    assert data["total_spent"] == -450.0
 
     categories = data["categories"]
     assert len(categories) == 2
 
-    # SQLite returns rows in potentially arbitrary order, so we convert to a
-    # dict
+    # SQLite returns rows in potentially arbitrary order, so we convert to a dict
     cat_dict = {c["name"]: c["value"] for c in categories}
-    assert cat_dict["Food"] == 250.0
-    assert cat_dict["Transport"] == 200.0
+    assert cat_dict["Food"] == -250.0
+    assert cat_dict["Transport"] == -200.0
 
 
 @pytest.mark.asyncio
@@ -84,5 +85,5 @@ async def test_api_transactions(populate_db):
     data = response.json()
 
     assert len(data) == 2
-    assert data[0]["category"] in ["Food", "Transport"]
+    assert data[0]["category"] in ["Food", "Transport", "Income"]
     assert "amount" in data[0]
